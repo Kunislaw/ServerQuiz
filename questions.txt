@@ -1,6 +1,3 @@
-Najlepszy Uniwersytet to ...
-UTP
-Najlepszy jezyk programowania to ...
-Java
-Godzina śmierci Jana Pawła II
-21:37
+Najlepszy Uniwersytet to ...,UTP
+Najlepszy jezyk programowania to ...,Java
+Godzina śmierci Jana Pawła II,21:37

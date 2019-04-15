@@ -3,65 +3,56 @@ package sample;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextArea;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Stream;
 
 
 public class Controller {
     @FXML
     private TextArea messages;
     private BlockingQueue<Answer> blockingQueue = new LinkedBlockingQueue<Answer>();
-    private BufferedReader br;
-    private Questions question;
     private Answer answer;
+    private Map<String,String> questions = new HashMap<>();
+    private Questions question;
+    private boolean correct = true;
     @FXML
     void initialize()
     {
         new Thread(() -> {
-            String line;
-            boolean correct = true; //zakladamy z gory ze pierwsza odpowiedz jest poprawna aby wyswietlic pierwsze pytanie
-            try{
-                br = new BufferedReader(new FileReader("questions.txt")); //wczytujemy plik z pytaniami
-            }
-            catch(Exception e){
-                System.out.println(e);
-                br = null; //jak sie nie uda ustawiamy br na null
-            }
-
+            loadQuestions();//wczytywanie pytań
+            Iterator it = questions.entrySet().iterator();
             while(true){ //nieskonczona petla
                 try {
-                    if (answer != null) { //jezeli przy pierwszym przejsciu petli answer jest null to pomijamy
-                        //sprawdzanie odpowiedzi
-                        if (answer.getAnswer().equals(question.getCorrectAnswer())) {
-                            correct = true;//jezeli odpowiedz na pytanie jest poprawna ustawiamy flage correct
+                    if(correct)//jesli poprawna odpowiedz
+                    {
+                        if(it.hasNext()){//sprawdzamy czy w mapie mamy jeszcze pytania, jak tak to
+                            Map.Entry pair = (Map.Entry) it.next();//pobieramy kolejne pytanie
+                            question = new Questions(pair.getKey().toString(),pair.getValue().toString());//przypisujemy je do obiektu
+                            messages.appendText(question.getQuestion() + "\n");//wyswietlamy pytanie
                         }
-                        else correct = false;
-                    }
-                    if(correct){//jezeli odpowiedz byla poprawna
-                        if ((line = br.readLine()) != null) { //wczytujemy kolejne pytanie
-                            question = new Questions();
-                            question.setQuestion(line);
-                            line = br.readLine();
-                            question.setCorrectAnswer(line);
-                            messages.setText(messages.getText() + question.getQuestion() + "\n");
-                            //wypisujemy kolejne pytanie
-                        } else {//jezeli koniec pliku, wypisz Koniec quizu
-                            messages.setText(messages.getText() + "Koniec quizu" + "\n");
+                        else{
+                            messages.appendText("Koniec \n");
                         }
                     }
-                    else{//ponawiamy to samo pytanie w przypadku blednej odpowiedzi
-                        messages.setText(messages.getText() + question.getQuestion() + "\n");
+                    else messages.appendText(question.getQuestion() + "\n");//jesli odpowiedz bledna, powielamy pytanie
+                    answer = blockingQueue.take();
+                    if(answer.getAnswer().toLowerCase().equals(question.getCorrectAnswer().toLowerCase())){//sprawdzamy czy podana odpowiedz jest prawidlowa
+                        correct = true;//jak tak to ustawiamy flage
+                        blockingQueue.clear();//czyszczczenie kolejki w przypadku prawidlowej odpowiedzi
                     }
-                    answer = blockingQueue.take();//pobranie z kolejki blokujacej elementu
+                    else correct = false;
                 }
-                catch(Exception e) {
-                    System.out.println(e);
+                catch (Exception e){
+                    messages.appendText(e + "\n");
                 }
             }
 
@@ -84,5 +75,18 @@ public class Controller {
                 System.out.println("Blad:\n"+e.getMessage());
             }
         }).start();//wystartowanie drugiego watku
+    }
+    private void loadQuestions(){
+        try (Stream<String> linesStream = Files.lines(new File("questions.txt").toPath())) {//tworzymy strumien aby odczytac plik
+            linesStream
+                    .map(line -> line.split(","))//mapujemy kazda linie na tablica dwuelementowa
+                    .forEach(line -> {
+                        questions.put(line[0],line[1]);//umieszczamy kazde pytanie w mapie
+            });
+        }
+        catch (Exception e){
+
+        }
+
     }
 }
