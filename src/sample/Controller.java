@@ -32,7 +32,7 @@ public class Controller {
                 try {
                     if(correct)//jesli poprawna odpowiedz
                     {
-                        if(it.hasNext()){//sprawdzamy czy w mapie mamy jeszcze pytania, jak tak to
+                        if(it.hasNext()){//sprawdzamy czy w liscie mamy jeszcze pytania, jak tak to
                             question = it.next();
                             messages.appendText(question.getQuestion() + "\n");//wyswietlamy pytanie
                         }
@@ -78,7 +78,7 @@ public class Controller {
             linesStream
                     .map(line -> line.split(","))//mapujemy kazda linie na tablica dwuelementowa
                     .forEach(line -> {
-                        questions.add(new Questions(line[0],line[1]));//umieszczamy kazde pytanie w mapie
+                        questions.add(new Questions(line[0],line[1]));//umieszczamy kazde pytanie w liscie
             });
         }
         catch (Exception e){
