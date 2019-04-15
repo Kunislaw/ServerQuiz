@@ -8,9 +8,7 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Stream;
@@ -21,7 +19,7 @@ public class Controller {
     private TextArea messages;
     private BlockingQueue<Answer> blockingQueue = new LinkedBlockingQueue<Answer>();
     private Answer answer;
-    private Map<String,String> questions = new HashMap<>();
+    private List<Questions> questions = new ArrayList<>();
     private Questions question;
     private boolean correct = true;
     @FXML
@@ -29,14 +27,13 @@ public class Controller {
     {
         new Thread(() -> {
             loadQuestions();//wczytywanie pytań
-            Iterator it = questions.entrySet().iterator();
+            Iterator<Questions> it = questions.iterator();
             while(true){ //nieskonczona petla
                 try {
                     if(correct)//jesli poprawna odpowiedz
                     {
                         if(it.hasNext()){//sprawdzamy czy w mapie mamy jeszcze pytania, jak tak to
-                            Map.Entry pair = (Map.Entry) it.next();//pobieramy kolejne pytanie
-                            question = new Questions(pair.getKey().toString(),pair.getValue().toString());//przypisujemy je do obiektu
+                            question = it.next();
                             messages.appendText(question.getQuestion() + "\n");//wyswietlamy pytanie
                         }
                         else{
@@ -81,7 +78,7 @@ public class Controller {
             linesStream
                     .map(line -> line.split(","))//mapujemy kazda linie na tablica dwuelementowa
                     .forEach(line -> {
-                        questions.put(line[0],line[1]);//umieszczamy kazde pytanie w mapie
+                        questions.add(new Questions(line[0],line[1]));//umieszczamy kazde pytanie w mapie
             });
         }
         catch (Exception e){
